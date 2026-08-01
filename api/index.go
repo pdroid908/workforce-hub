@@ -10,9 +10,9 @@ var app *gin.Engine
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
-	app = gin.New()
-	app.Use(gin.Recovery())
+	app = gin.Default() // Menggunakan Default (sudah include Logger & Recovery)
 
+	// Route utama
 	app.GET("/api/v1/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"system":  "WorkforceHub API",
@@ -22,7 +22,7 @@ func init() {
 	})
 }
 
-// ⚠️ NAMA FUNGSI HARUS 'Handler' (H Kapital) dan MENGGUNAKAN 'http.ResponseWriter', '*http.Request'
+// Handler wajib diekspor
 func Handler(w http.ResponseWriter, r *http.Request) {
 	app.ServeHTTP(w, r)
 }
