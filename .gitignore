@@ -1,1 +1,24 @@
+# Environment & Secret Files (Sangat Penting agar API Key tidak bocor!)
 .env
+*.env
+.env.local
+
+# Temporary Files / Air Live Reload
+tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build outputs / Binaries
+*.test
+*.out
+bin/
+
+# Vercel Deployment Files
+.vercel/
+
+# OS Specific Files
+.DS_Store
+Thumbs.db
