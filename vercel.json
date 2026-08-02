@@ -4,12 +4,16 @@
     {
       "src": "api/index.go",
       "use": "@vercel/go"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "api/index.go"
+      "dest": "/api/index.go"
     },
     {
       "src": "/(.*)",
