@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AirQuality Pro - Dashboard Enterprise</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased p-3 sm:p-6 md:p-8">
+
+  <div class="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+
+    <!-- 1. NAVBAR UTAMA -->
+    <nav class="flex flex-col sm:flex-row items-center justify-between bg-white border border-slate-200/80 p-3.5 sm:p-4 rounded-2xl shadow-sm gap-3">
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center gap-3">
+          <div class="bg-emerald-500 text-white p-2 sm:p-2.5 rounded-xl shadow-md shadow-emerald-500/20 text-lg">
+            🌬️
+          </div>
+          <div>
+            <h1 class="text-lg sm:text-xl font-black tracking-tight text-slate-900">AirQuality <span class="text-emerald-600">Pro</span></h1>
+            <p class="text-[10px] sm:text-[11px] font-semibold text-slate-400">Enterprise Monitoring Dashboard</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB SWITCHER METODE PENCARIAN -->
+      <div class="flex p-1 bg-slate-100 rounded-xl text-xs font-bold border border-slate-200 w-full sm:w-auto">
+        <button id="tabGpsBtn" onclick="switchTab('gps')" class="flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg transition-all bg-white text-emerald-700 shadow-sm flex items-center justify-center gap-1.5">
+          📍 GPS Lokasi Saya
+        </button>
+        <button id="tabSearchBtn" onclick="switchTab('search')" class="flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5">
+          🔍 Cari Stasiun / Negara
+        </button>
+      </div>
+    </nav>
+
+    <!-- 2. CONTROL INPUT BAR (CASCADING DROPDOWN FILTER) -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-3.5 sm:p-5 shadow-sm">
+      
+      <!-- MODE GPS -->
+      <div id="sectionGps" class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-xs text-slate-500 font-medium text-center sm:text-left">
+          Mendeteksi kualitas udara terdekat secara presisi berdasarkan titik koordinat GPS lokasi kamu saat ini.
+        </p>
+        <button id="btnGps" onclick="fetchByGps()" class="w-full sm:w-auto shrink-0 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3 sm:py-2.5 px-5 rounded-xl transition shadow-md shadow-emerald-600/20 text-xs flex items-center justify-center gap-2">
+          📍 Deteksi Otomatis Lokasi GPS
+        </button>
+      </div>
+
+      <!-- MODE SEARCH BERSAMAM CASCADING FILTER -->
+      <div id="sectionSearch" class="hidden flex-col gap-3">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
+          
+          <!-- DROPDOWN 1: PILIH NEGARA -->
+          <div class="lg:col-span-4">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">1. Pilih Negara:</label>
+            <select id="countrySelect" onchange="onCountryChange(this.value)" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition cursor-pointer">
+              <option value="">🌐 Loading negara...</option>
+            </select>
+          </div>
+
+          <!-- DROPDOWN 2: PILIH STASIUN / KOTA (DIFILTER DARI NEGARA) -->
+          <div class="lg:col-span-4">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">2. Pilih Stasiun / Kota:</label>
+            <select id="stationSelect" onchange="onStationChange(this.value)" disabled class="w-full bg-slate-100 border border-slate-200 text-slate-400 text-xs font-semibold rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition cursor-not-allowed">
+              <option value="">-- Pilih negara terlebih dahulu --</option>
+            </select>
+          </div>
+
+          <!-- INPUT MANUALLY BEBAS -->
+          <div class="lg:col-span-3">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Atau Ketik Bebas:</label>
+            <input 
+              id="cityInput" 
+              type="text"
+              placeholder="Misal: Yogyakarta..." 
+              oninput="onInputChange(this.value)"
+              class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 placeholder-slate-400 transition"
+              autocomplete="off"
+            />
+          </div>
+
+          <!-- SUBMIT BUTTON -->
+          <div class="lg:col-span-1 sm:col-span-2 lg:mt-5">
+            <button id="btnSubmit" onclick="startSearch()" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold py-3 px-3 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1">
+              🔍 Cek
+            </button>
+          </div>
+
+        </div>
+
+        <input type="hidden" id="selectedQueryValue" />
+      </div>
+
+    </section>
+
+    <!-- LOADING STATE -->
+    <div id="loading" class="hidden text-center py-8">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent mb-2"></div>
+      <p id="loadingText" class="text-xs font-semibold text-slate-500">Mengambil data kualitas udara...</p>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div id="errorMessage" class="hidden bg-rose-50 border border-rose-200 text-rose-600 p-4 rounded-xl text-xs text-center font-bold"></div>
+
+    <!-- 3. HERO BANNER RESULT PANEL (ENTERPRISE GOJADWAL LAYOUT) -->
+    <main id="resultCard" class="hidden">
+      <!-- Background dinamis diubah via JS sesuai warna AQI: ID aqiHeroBanner -->
+      <div id="aqiHeroBanner" class="bg-emerald-700 transition-colors duration-500 rounded-3xl p-5 sm:p-8 md:p-10 shadow-xl text-white grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center border border-black/5">
+        
+        <!-- SISI KIRI: METRIK AQI UTAMA & LOKASI -->
+        <div class="lg:col-span-7 space-y-4 sm:space-y-5 text-center sm:text-left">
+          
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+              <span id="sourceBadge" class="text-[10px] font-extrabold uppercase tracking-widest text-white">WAQI OFFICIAL</span>
+            </div>
+            <div id="locationNotice"></div>
+          </div>
+
+          <div>
+            <h2 id="locationName" class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight mt-1 leading-tight">--</h2>
+          </div>
+
+          <div class="flex items-baseline justify-center sm:justify-start gap-3 sm:gap-4 py-1 sm:py-2">
+            <span id="aqiValue" class="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight drop-shadow-md">0</span>
+            <div class="text-left">
+              <span class="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest block opacity-80">Indeks AQI</span>
+              <span id="aqiStatus" class="inline-block mt-1 font-black text-xs sm:text-sm bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/20">--</span>
+            </div>
+          </div>
+
+          <p id="heroDescription" class="text-xs sm:text-sm text-white/90 leading-relaxed max-w-lg font-medium mx-auto sm:mx-0">
+            Pantau pembaruan status indeks kualitas udara secara langsung dari stasiun pemantau resmi di lokasi ini.
+          </p>
+
+          <div class="text-[10px] sm:text-[11px] font-bold text-white/70 pt-1">
+            Terakhir Diperbarui: <span id="updatedAt" class="text-white font-black">-</span>
+          </div>
+        </div>
+
+        <!-- SISI KANAN: CARD WHITE MELAYANG (PREVIEW METRIK & ADVICE) -->
+        <div class="lg:col-span-5 w-full">
+          <div class="bg-white text-slate-800 p-4 sm:p-6 rounded-2xl shadow-2xl border border-slate-100 space-y-4">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-400">Preview Metrik Cuaca</h3>
+              <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-md">Live Data</span>
+            </div>
+
+            <!-- GRID DETAIL POLUTAN / SUHU / KELEMBAPAN -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Polutan</span>
+                <span id="dominantPollutant" class="font-black text-xs sm:text-sm text-emerald-600 uppercase">-</span>
+              </div>
+              <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Suhu</span>
+                <span id="tempValue" class="font-black text-xs sm:text-sm text-amber-500">-</span>
+              </div>
+              <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Kelembapan</span>
+                <span id="humidityValue" class="font-black text-xs sm:text-sm text-sky-600">-</span>
+              </div>
+            </div>
+
+            <!-- BOX SARAN KESEHATAN -->
+            <div class="bg-slate-50 border border-slate-100 p-3 sm:p-3.5 rounded-xl space-y-1">
+              <span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">💡 Rekomendasi Kesehatan:</span>
+              <p id="healthAdvice" class="text-xs font-medium text-slate-600 leading-relaxed">--</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 4. PANDUAN STANDAR INDEKS AQI -->
+    <section class="space-y-3">
+      <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider text-center sm:text-left">Standar Indeks Kualitas Udara (AQI)</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+        
+        <div class="bg-white border border-emerald-500/20 p-3 rounded-2xl shadow-sm text-center">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#2ECC71] mx-auto mb-1"></div>
+          <span class="font-black text-xs text-slate-800 block">0 - 50</span>
+          <span class="text-[10px] font-bold text-emerald-600 block mt-0.5">Baik</span>
+        </div>
+
+        <div class="bg-white border border-amber-500/20 p-3 rounded-2xl shadow-sm text-center">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#F39C12] mx-auto mb-1"></div>
+          <span class="font-black text-xs text-slate-800 block">51 - 100</span>
+          <span class="text-[10px] font-bold text-amber-600 block mt-0.5">Sedang</span>
+        </div>
+
+        <div class="bg-white border border-orange-500/20 p-3 rounded-2xl shadow-sm text-center">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#E67E22] mx-auto mb-1"></div>
+          <span class="font-black text-xs text-slate-800 block">101 - 150</span>
+          <span class="text-[10px] font-bold text-orange-600 block mt-0.5">Rentang Sensitif</span>
+        </div>
+
+        <div class="bg-white border border-rose-500/20 p-3 rounded-2xl shadow-sm text-center">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#E74C3C] mx-auto mb-1"></div>
+          <span class="font-black text-xs text-slate-800 block">151 - 200</span>
+          <span class="text-[10px] font-bold text-rose-600 block mt-0.5">Tidak Sehat</span>
+        </div>
+
+        <div class="bg-white border border-purple-500/20 p-3 rounded-2xl shadow-sm text-center">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#8E44AD] mx-auto mb-1"></div>
+          <span class="font-black text-xs text-slate-800 block">201 - 300</span>
+          <span class="text-[10px] font-bold text-purple-600 block mt-0.5">Sangat Tidak Sehat</span>
+        </div>
+
+        <div class="bg-white border border-stone-500/20 p-3 rounded-2xl shadow-sm text-center col-span-2 sm:col-span-1">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#7E5109] mx-auto mb-1"></div>
+          <span class="font-black text-xs text-slate-800 block">300+</span>
+          <span class="text-[10px] font-bold text-stone-600 block mt-0.5">Berbahaya</span>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const API_BASE_URL = '/api';
+    let stationsByCountry = {};
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadDataAndSetupCascade();
+    });
+
+    function switchTab(type) {
+      const gpsTab = document.getElementById('tabGpsBtn');
+      const searchTab = document.getElementById('tabSearchBtn');
+      const gpsSection = document.getElementById('sectionGps');
+      const searchSection = document.getElementById('sectionSearch');
+
+      if (type === 'gps') {
+        gpsTab.className = 'flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg transition-all bg-white text-emerald-700 shadow-sm flex items-center justify-center gap-1.5';
+        searchTab.className = 'flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5';
+        gpsSection.classList.remove('hidden');
+        gpsSection.classList.add('flex');
+        searchSection.classList.add('hidden');
+        searchSection.classList.remove('flex');
+      } else {
+        searchTab.className = 'flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg transition-all bg-white text-emerald-700 shadow-sm flex items-center justify-center gap-1.5';
+        gpsTab.className = 'flex-1 sm:flex-none py-2 px-3 sm:px-4 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5';
+        searchSection.classList.remove('hidden');
+        searchSection.classList.add('flex');
+        gpsSection.classList.add('hidden');
+        gpsSection.classList.remove('flex');
+      }
+    }
+
+    // ANALISA / PENENTUAN NAMA NEGARA
+    function parseCountry(station) {
+      if (station.country) return station.country.toUpperCase();
+      
+      const name = station.name;
+      if (name.includes('Indonesia') || name.includes('Sleman') || name.includes('Jakarta') || name.includes('Bali') || name.includes('Bandung') || name.includes('Yogyakarta')) return '🇮🇩 INDONESIA';
+      if (name.includes('Japan') || name.includes('Tokyo') || name.includes('Osaka') || name.includes('Kyoto')) return '🇯🇵 JAPAN';
+      if (name.includes('Kingdom') || name.includes('UK') || name.includes('London') || name.includes('Plymouth')) return '🇬🇧 UNITED KINGDOM';
+      if (name.includes('United States') || name.includes('USA') || name.includes('New York') || name.includes('California') || name.includes('US Embassy')) return '🇺🇸 UNITED STATES';
+      if (name.includes('China') || name.includes('Shanghai') || name.includes('Beijing')) return '🇨🇳 CHINA';
+      if (name.includes('Turkey') || name.includes('Türkiye')) return '🇹🇷 TURKEY';
+      if (name.includes('France') || name.includes('Paris')) return '🇫🇷 FRANCE';
+      if (name.includes('Madagascar')) return '🇲🇬 MADAGASCAR';
+      if (name.includes('Canada')) return '🇨🇦 CANADA';
+      if (name.includes('South Korea')) return '🇰🇷 SOUTH KOREA';
+      
+      return '🌐 LAINNYA / INTERNASIONAL';
+    }
+
+    // LOAD DATA UTAMA DAN SIAPKAN POPULASI NEGARA
+    async function loadDataAndSetupCascade() {
+      const countrySelect = document.getElementById('countrySelect');
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/cities`);
+        const data = await res.json();
+        
+        countrySelect.innerHTML = '<option value="">-- Pilih Negara --</option>';
+        stationsByCountry = {};
+
+        if (data.stations) {
+          data.stations.forEach(item => {
+            const country = parseCountry(item);
+            if (!stationsByCountry[country]) {
+              stationsByCountry[country] = [];
+            }
+            stationsByCountry[country].push(item);
+          });
+
+          // Urutkan Negara (Indonesia & Japan di atas)
+          const sortedCountries = Object.keys(stationsByCountry).sort((a, b) => {
+            if (a.includes('INDONESIA')) return -1;
+            if (b.includes('INDONESIA')) return 1;
+            return a.localeCompare(b);
+          });
+
+          sortedCountries.forEach(country => {
+            const opt = document.createElement('option');
+            opt.value = country;
+            opt.textContent = country;
+            countrySelect.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error("Gagal load data stasiun:", err);
+        countrySelect.innerHTML = '<option value="">Gagal memuat data negara</option>';
+      }
+    }
+
+    // TRIGGER KETIKA NEGARA DIPILIH -> ISI STASIUN SECARA SPESIFIK
+    function onCountryChange(selectedCountry) {
+      const stationSelect = document.getElementById('stationSelect');
+      document.getElementById('cityInput').value = ""; // Reset input manual
+
+      if (!selectedCountry) {
+        stationSelect.innerHTML = '<option value="">-- Pilih negara terlebih dahulu --</option>';
+        stationSelect.disabled = true;
+        stationSelect.className = "w-full bg-slate-100 border border-slate-200 text-slate-400 text-xs font-semibold rounded-xl p-3 cursor-not-allowed";
+        document.getElementById('selectedQueryValue').value = "";
+        return;
+      }
+
+      const stations = stationsByCountry[selectedCountry] || [];
+      stationSelect.innerHTML = '<option value="">-- Pilih Stasiun / Kota --</option>';
+
+      stations.forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st.city;
+        opt.textContent = st.name;
+        stationSelect.appendChild(opt);
+      });
+
+      stationSelect.disabled = false;
+      stationSelect.className = "w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition cursor-pointer";
+      document.getElementById('selectedQueryValue').value = "";
+    }
+
+    // TRIGGER KETIKA STASIUN DIPILIH
+    function onStationChange(selectedCity) {
+      if (selectedCity) {
+        document.getElementById('selectedQueryValue').value = selectedCity;
+        document.getElementById('cityInput').value = ""; // Reset input manual
+      }
+    }
+
+    // TRIGGER KETIKA USER MENGETIK BEBAS
+    function onInputChange(val) {
+      if (val.trim() !== "") {
+        document.getElementById('selectedQueryValue').value = val.trim();
+        // Reset dropdowns agar tidak ada perselisihan state
+        document.getElementById('countrySelect').value = "";
+        const stationSelect = document.getElementById('stationSelect');
+        stationSelect.innerHTML = '<option value="">-- Pilih negara terlebih dahulu --</option>';
+        stationSelect.disabled = true;
+        stationSelect.className = "w-full bg-slate-100 border border-slate-200 text-slate-400 text-xs font-semibold rounded-xl p-3 cursor-not-allowed";
+      }
+    }
+
+    function startSearch() {
+      const queryValue = document.getElementById('selectedQueryValue').value;
+      const rawInput = document.getElementById('cityInput').value;
+
+      if (queryValue) {
+        fetchAirQuality(`city=${encodeURIComponent(queryValue)}`, false);
+      } else if (rawInput.trim() !== '') {
+        fetchAirQuality(`city=${encodeURIComponent(rawInput.trim())}`, false);
+      } else {
+        showError('Silakan pilih Negara & Stasiun terlebih dahulu atau ketik nama kota!');
+      }
+    }
+
+    function fetchByGps() {
+      if (!navigator.geolocation) {
+        showError('Browser kamu tidak mendukung fitur GPS.');
+        return;
+      }
+
+      showLoading(true, "Mendeteksi posisi koordinat GPS kamu...");
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          fetchAirQuality(`lat=${lat}&lng=${lng}`, true);
+        },
+        (error) => {
+          showLoading(false);
+          let errMsg = 'Gagal mengambil lokasi GPS.';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errMsg = 'Izin GPS ditolak! Izinkan akses lokasi pada pengaturan browser kamu.';
+              break;
+            case error.TIMEOUT:
+              errMsg = 'Waktu permintaan GPS habis. Coba lagi atau gunakan pencarian nama kota.';
+              break;
+          }
+          showError(errMsg);
+        },
+        { timeout: 10000 }
+      );
+    }
+
+    async function fetchAirQuality(queryParams, isGps = false) {
+      showLoading(true, "Mengambil data kualitas udara terbaru...");
+      showError(false);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/air-quality?${queryParams}`);
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan pada server');
+
+        renderResult(data, isGps);
+      } catch (err) {
+        showError(`Gagal mengambil data: ${err.message}`);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function renderResult(data, isGps) {
+      document.getElementById('resultCard').classList.remove('hidden');
+
+      const noticeBox = document.getElementById('locationNotice');
+      if (isGps) {
+        noticeBox.innerHTML = `<span class="inline-block text-[10px] font-black uppercase tracking-wider text-white bg-black/20 px-3 py-0.5 rounded-full">📍 Berdasarkan GPS Lokasi Kamu</span>`;
+      } else {
+        noticeBox.innerHTML = '';
+      }
+
+      document.getElementById('locationName').textContent = data.location;
+      document.getElementById('aqiValue').textContent = data.aqi;
+      document.getElementById('aqiStatus').textContent = data.status;
+      document.getElementById('sourceBadge').textContent = data.source;
+      document.getElementById('dominantPollutant').textContent = data.dominant_pollutant || '-';
+      document.getElementById('tempValue').textContent = data.weather ? data.weather.temperature : '-';
+      document.getElementById('humidityValue').textContent = data.weather ? data.weather.humidity : '-';
+      document.getElementById('healthAdvice').textContent = data.health_advice;
+      document.getElementById('updatedAt').textContent = data.updated_at;
+
+      // Ubah background banner secara dinamis sesuai kode warna AQI dari backend
+      const heroBanner = document.getElementById('aqiHeroBanner');
+      heroBanner.style.backgroundColor = data.badge_color;
+    }
+
+    function showLoading(state, text = "Mengambil data...") {
+      document.getElementById('loadingText').textContent = text;
+      document.getElementById('loading').classList.toggle('hidden', !state);
+      if (state) document.getElementById('resultCard').classList.add('hidden');
+    }
+
+    function showError(msg) {
+      const errBox = document.getElementById('errorMessage');
+      if (msg) {
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+        document.getElementById('resultCard').classList.add('hidden');
+      } else {
+        errBox.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
